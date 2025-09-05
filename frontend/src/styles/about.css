@@ -1,0 +1,28 @@
+.about-page {
+  max-width: 900px;
+  margin: auto;
+}
+
+.about-page h1 {
+  font-size: 2.75rem;
+}
+
+.about-page .lead {
+  font-size: 1.15rem;
+}
+
+.mission h2,
+.team h2,
+.contact-us h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.team img {
+  border: 3px solid #dee2e6;
+}
+
+.team h5 {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}

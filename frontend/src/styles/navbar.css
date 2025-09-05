@@ -1,0 +1,100 @@
+/* Navbar Background */
+.custom-navbar {
+  background: linear-gradient(90deg, #4e54c8, #8f94fb);
+  padding: 0.8rem 1.5rem;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Brand Logo */
+.brand-logo {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+}
+.brand-logo i {
+  color: #ffd700;
+  font-size: 1.4rem;
+}
+
+/* Nav Links */
+.nav-link-custom {
+  color: #fff !important;
+  margin: 0 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+.nav-link-custom:hover {
+  color: #ffd700 !important;
+  transform: translateY(-2px);
+}
+
+/* Login Button */
+.login-btn {
+  background: #ffd700;
+  color: #333 !important;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: all 0.3s ease-in-out;
+}
+.login-btn:hover {
+  background: #ffcc00;
+  transform: scale(1.05);
+}
+
+/* Username Dropdown Title */
+#username span {
+  color: #fff; /* White text */
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  transition: color 0.3s ease;
+}
+
+#username i {
+  color: #ffd700; /* Gold user icon */
+  font-size: 1.2rem;
+}
+
+#username:hover span {
+  color: #ffd700; /* Gold on hover */
+}
+
+/* Dropdown */
+.nav-dropdown .dropdown-menu {
+  border-radius: 10px;
+  padding: 0.5rem;
+  background: #f8f9fa;
+}
+.nav-dropdown .dropdown-item {
+  transition: all 0.2s ease;
+}
+.nav-dropdown .dropdown-item:hover {
+  background: #4e54c8;
+  color: #fff;
+  border-radius: 6px;
+}
+
+/* Remove Bootstrap caret from NavDropdown */
+.nav-dropdown .dropdown-toggle::after {
+  display: none !important;
+}
+
+/* Logout Button */
+.logout-btn {
+  color: red !important;
+  font-weight: 600;
+}
+.logout-btn:hover {
+  background: #ffe6e6;
+  color: darkred !important;
+}
+
+/* Search Bar Container */
+.search-container {
+  margin-left: 20px;
+}
