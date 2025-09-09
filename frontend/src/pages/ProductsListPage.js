@@ -2,13 +2,12 @@ import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getProductsList } from '../actions/productActions'
 import Message from '../components/Message'
-import { Spinner, Row, Col, Container, InputGroup, FormControl } from 'react-bootstrap'
+import { Spinner, Row, Col, Container } from 'react-bootstrap'
 import Product from '../components/Product'
-import { useHistory, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { CREATE_PRODUCT_RESET } from '../constants'
 
 function ProductsListPage() {
-    const history = useHistory();
     const location = useLocation();
     const dispatch = useDispatch();
 

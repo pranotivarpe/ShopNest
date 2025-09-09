@@ -27,7 +27,7 @@ function SearchBarForProducts() {
                             fontSize: "1rem",
                             borderRadius: "8px",
                             border: "1px solid #ccc",
-                            minWidth: "400px"
+                            minWidth: "300px"
                         }}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteProduct, getProductDetails } from "../actions/productActions";
+import { addToCart } from "../actions/cartActions";
 import Message from "../components/Message";
 import {
     Spinner,
@@ -17,6 +18,7 @@ import {
     DELETE_PRODUCT_RESET,
     UPDATE_PRODUCT_RESET,
     CARD_CREATE_RESET,
+    CART_ADD_SUCCESS,
 } from "../constants";
 
 function ProductDetailsPage({ history, match }) {
@@ -43,6 +45,10 @@ function ProductDetailsPage({ history, match }) {
     );
     const { success: productDeletionSuccess } = deleteProductReducer;
 
+    // cart add reducer
+    const cartAddReducer = useSelector((state) => state.cartAddReducer);
+    const { success: cartAddSuccess, loading: cartAddLoading } = cartAddReducer;
+
     useEffect(() => {
         dispatch(getProductDetails(match.params.id));
         dispatch({ type: UPDATE_PRODUCT_RESET });
@@ -50,10 +56,26 @@ function ProductDetailsPage({ history, match }) {
         dispatch({ type: CARD_CREATE_RESET });
     }, [dispatch, match]);
 
+    useEffect(() => {
+        if (cartAddSuccess) {
+            alert("✅ Product added to cart successfully!");
+            dispatch({ type: CART_ADD_SUCCESS });
+        }
+    }, [cartAddSuccess, dispatch]);
+
     // confirm product deletion
     const confirmDelete = () => {
         dispatch(deleteProduct(match.params.id));
         handleClose();
+    };
+
+    // add to cart handler
+    const handleAddToCart = () => {
+        if (!userInfo) {
+            history.push('/login');
+        } else {
+            dispatch(addToCart(product.id));
+        }
     };
 
     // after deletion
@@ -159,11 +181,26 @@ function ProductDetailsPage({ history, match }) {
                             <h4 className="fw-bold">Buy</h4>
                             <hr />
                             {product.stock ? (
-                                <Link to={`${product.id}/checkout/`}>
-                                    <Button variant="success" className="w-100 py-2">
-                                        💳 Pay with Stripe
+                                <>
+                                    <Button
+                                        variant="primary"
+                                        className="w-100 py-2 mb-2"
+                                        onClick={handleAddToCart}
+                                        disabled={cartAddLoading}
+                                    >
+                                        {cartAddLoading ? 'Adding...' : '🛒 Add to Cart'}
                                     </Button>
-                                </Link>
+                                    <Link to="/cart">
+                                        <Button variant="outline-primary" className="w-100 py-2 mb-2">
+                                            View Cart
+                                        </Button>
+                                    </Link>
+                                    <Link to={`${product.id}/checkout/`}>
+                                        <Button variant="success" className="w-100 py-2">
+                                            💳 Buy Now
+                                        </Button>
+                                    </Link>
+                                </>
                             ) : (
                                 <Message variant="danger">Out of Stock!</Message>
                             )}

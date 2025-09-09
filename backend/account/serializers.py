@@ -1,7 +1,8 @@
-from .models import StripeModel, BillingAddress, OrderModel
+from .models import StripeModel, BillingAddress, OrderModel, Cart, CartItem
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from product.models import Product
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -50,3 +51,29 @@ class AllOrdersListSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderModel
         fields = "__all__"
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product = serializers.SerializerMethodField()
+    product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), source='product', write_only=True)
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'product_id', 'quantity', 'total_price']
+
+    def get_product(self, obj):
+        return {
+            'id': obj.product.id,
+            'name': obj.product.name,
+            'price': obj.product.price,
+            'image': obj.product.image.url if obj.product.image else ''
+        }
+
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(source='cartitem_set', many=True, read_only=True)
+    total_price = serializers.DecimalField(max_digits=8, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Cart
+        fields = ['id', 'user', 'items', 'total_price']

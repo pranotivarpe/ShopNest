@@ -12,7 +12,6 @@ import CardDetailsPage from './pages/CardDetailsPage'
 import AccountPage from './pages/AccountPage'
 import AccountUpdatePage from './pages/AccountUpdatePage'
 import DeleteUserAccountPage from './pages/DeleteUserAccountPage'
-import AllAddressesOfUserPage from './pages/AllAddressesOfUserPage'
 import AddressUpdatePage from './pages/AddressUpdatePage'
 import OrdersListPage from './pages/OrdersListPage'
 import ProductCreatePage from './pages/ProductCreatePage'
@@ -23,6 +22,7 @@ import ContactUs from './pages/ContactUs';
 import ElectronicsPage from './pages/ElectronicsPage';
 import ClothingPage from './pages/ClothingPage';
 import DecorPage from './pages/DecorPage';
+import CartPage from './pages/CartPage'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/custom.css';
 
@@ -53,9 +53,11 @@ const App = () => {
             <Route path="/all-orders/" component={OrdersListPage} exact />
             <Route path="/about" component={AboutPage} exact />
             <Route path="/contact" component={ContactUs} exact />
-            <Route path="/electronics" component={ElectronicsPage} />
-            <Route path="/clothing" component={ClothingPage} />
-            <Route path="/decor" component={DecorPage} />
+            <Route path="/electronics" component={ElectronicsPage} exact />
+            <Route path="/clothing" component={ClothingPage} exact />
+            <Route path="/decor" component={DecorPage} exact />
+            <Route path="/cart" component={CartPage} exact />
+            <Route path="/checkout" component={CheckoutPage} exact />
 
             <Route path="" component={NotFound} exact />
 

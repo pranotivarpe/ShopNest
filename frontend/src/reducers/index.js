@@ -17,6 +17,13 @@ import {
 } from "./cardReducers";
 
 import {
+    cartReducer,
+    cartAddReducer,
+    cartRemoveReducer,
+    cartUpdateReducer
+} from "./cartReducers";
+
+import {
     userLoginReducer,
     userRegisterReducer,
     userDetailsReducer,
@@ -43,7 +50,7 @@ const allReducers = combineReducers({
     updateStripeCardtReducer,
     deleteSavedCardReducer,
     userLoginReducer,
-    userRegisterReducer,    
+    userRegisterReducer,
     getSingleAddressReducer,
     getAllAddressesOfUserReducer,
     createUserAddressReducer,
@@ -55,6 +62,10 @@ const allReducers = combineReducers({
     userDetailsReducer,
     userDetailsUpdateReducer,
     deleteUserAccountReducer,
+    cartReducer,
+    cartAddReducer,
+    cartRemoveReducer,
+    cartUpdateReducer,
 })
 
 

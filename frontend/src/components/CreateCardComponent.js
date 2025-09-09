@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useHistory } from "react-router-dom";
-import { Form, Button, Row, Col, Card } from 'react-bootstrap'
+import { Form, Button, Card } from 'react-bootstrap'
 import { createCard } from '../actions/cardActions'
 import { useDispatch, useSelector } from 'react-redux'
 import { Spinner } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import Message from './Message';
 import DeleteCardComponent from './DeleteCardComponent';
-import { useStripe, useElements, Elements } from '@stripe/react-stripe-js';
+import { useStripe, useElements } from '@stripe/react-stripe-js';
 import StripeCardElement from './StripeCardElement';
-
-// to manage our exp month and exp year
-let todays_date = new Date()
-let current_year = todays_date.getFullYear()
-
 
 const CreateCardComponent = ({ stripeCards, addressSelected }) => {
 

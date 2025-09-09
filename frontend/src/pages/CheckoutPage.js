@@ -17,7 +17,7 @@ import { loadStripe } from '@stripe/stripe-js'
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY)
 
 const CheckoutPage = ({ match }) => {
-    let history = useHistory()
+    const history = useHistory()
     const dispatch = useDispatch()
 
     const [addressSelected, setAddressSelected] = useState(false)
@@ -49,18 +49,30 @@ const CheckoutPage = ({ match }) => {
             history.push("/login")
         } else {
             dispatch(checkTokenValidation())
-            dispatch(getProductDetails(match.params.id))
+
+            const productId = match?.params?.id
+            if (!productId) {
+                alert("No product selected. Redirecting to products page.")
+                history.push("/products")
+                return
+            }
+
+            console.log("Fetching product details for ID:", productId)
+            dispatch(getProductDetails(productId))
             dispatch(savedCardsList())
             dispatch({ type: CHARGE_CARD_RESET })
         }
     }, [dispatch, match, history, success, userInfo])
 
-    if (userInfo && tokenError === "Request failed with status code 401") {
-        alert("Session expired, please login again.")
-        dispatch(logout())
-        history.push("/login")
-        window.location.reload()
-    }
+    // Token expiration handling
+    useEffect(() => {
+        if (userInfo && tokenError === "Request failed with status code 401") {
+            alert("Session expired, please login again.")
+            dispatch(logout())
+            history.push("/login")
+            window.location.reload()
+        }
+    }, [userInfo, tokenError, dispatch, history])
 
     return (
         <Container className="py-4">
@@ -82,7 +94,7 @@ const CheckoutPage = ({ match }) => {
 
             {error && <Message variant='danger'>{error}</Message>}
 
-            {!loading && !error && (
+            {!loading && !error && product && (
                 <Row>
                     {/* Checkout Summary */}
                     <Col md={6} className="mb-4">
@@ -91,17 +103,23 @@ const CheckoutPage = ({ match }) => {
                             <Card.Body>
                                 <Row className="align-items-center">
                                     <Col xs={5}>
-                                        <Image
-                                            src={product.image}
-                                            alt={product.name}
-                                            fluid
-                                            rounded
-                                            className="border"
-                                        />
+                                        {product?.image ? (
+                                            <Image
+                                                src={product.image}
+                                                alt={product?.name || "Product"}
+                                                fluid
+                                                rounded
+                                                className="border"
+                                            />
+                                        ) : (
+                                            <div className="border bg-light d-flex justify-content-center align-items-center" style={{ height: "150px" }}>
+                                                <span>No Image</span>
+                                            </div>
+                                        )}
                                     </Col>
                                     <Col xs={7}>
-                                        <h5 className="text-capitalize">{product.name}</h5>
-                                        <span className="text-success h6">₹ {product.price}</span>
+                                        <h5 className="text-capitalize">{product?.name || "Unnamed Product"}</h5>
+                                        <span className="text-success h6">₹ {product?.price || 0}</span>
                                     </Col>
                                 </Row>
                             </Card.Body>
@@ -111,7 +129,7 @@ const CheckoutPage = ({ match }) => {
                             <Card.Body>
                                 <div className="d-flex justify-content-between align-items-center mb-2">
                                     <h4>Billing Address</h4>
-                                    <Link to="/all-addresses/">Edit/Add</Link>
+                                    <Link to="/all-addresses/" aria-label="Edit or add billing address">Edit/Add</Link>
                                 </div>
                                 <UserAddressComponent handleAddressId={handleAddressId} />
                             </Card.Body>
@@ -121,7 +139,12 @@ const CheckoutPage = ({ match }) => {
                     {/* Payments Section */}
                     <Col md={6}>
                         <h3 className="mb-3">Payments Section</h3>
-                        <Card className="shadow-sm">
+                        {!addressSelected && (
+                            <Message variant='warning' aria-live="polite">
+                                Please select a billing address to proceed with payment.
+                            </Message>
+                        )}
+                        <Card className="shadow-sm" aria-disabled={!addressSelected}>
                             <Card.Body>
                                 {success ? (
                                     <ChargeCardComponent
@@ -133,7 +156,7 @@ const CheckoutPage = ({ match }) => {
                                     <Elements stripe={stripePromise}>
                                         <CreateCardComponent
                                             addressSelected={addressSelected}
-                                            stripeCards={stripeCards}
+                                            stripeCards={stripeCards || []}
                                         />
                                     </Elements>
                                 )}

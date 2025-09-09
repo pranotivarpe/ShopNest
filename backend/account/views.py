@@ -1,4 +1,4 @@
-from .models import StripeModel, BillingAddress, OrderModel
+from .models import StripeModel, BillingAddress, OrderModel, Cart, CartItem
 from django.http import Http404
 from rest_framework import status
 from rest_framework.views import APIView
@@ -6,18 +6,21 @@ from django.contrib.auth.models import User
 from rest_framework.response import Response
 from django.contrib.auth.hashers import make_password
 from rest_framework import authentication, permissions
-from rest_framework.decorators import permission_classes
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer 
+from rest_framework.decorators import permission_classes, api_view
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView # for login page
 from django.contrib.auth.hashers import check_password
 from django.shortcuts import get_object_or_404
 from .serializers import (
-    UserSerializer, 
-    UserRegisterTokenSerializer, 
-    CardsListSerializer, 
+    UserSerializer,
+    UserRegisterTokenSerializer,
+    CardsListSerializer,
     BillingAddressSerializer,
-    AllOrdersListSerializer
+    AllOrdersListSerializer,
+    CartSerializer,
+    CartItemSerializer
 )
+from product.models import Product
 
 
 # register user
@@ -281,3 +284,55 @@ class ChangeOrderStatus(APIView):
         
         serializer = AllOrdersListSerializer(order, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Cart APIs
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_cart(request):
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    serializer = CartSerializer(cart)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def add_to_cart(request):
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    product_id = request.data.get('product_id')
+    quantity = request.data.get('quantity', 1)
+    product = get_object_or_404(Product, id=product_id)
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    if not created:
+        cart_item.quantity += int(quantity)
+    else:
+        cart_item.quantity = int(quantity)
+    cart_item.save()
+    serializer = CartSerializer(cart)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def remove_from_cart(request):
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    product_id = request.data.get('product_id')
+    product = get_object_or_404(Product, id=product_id)
+    cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+    if cart_item:
+        cart_item.delete()
+    serializer = CartSerializer(cart)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def update_cart_item(request):
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    product_id = request.data.get('product_id')
+    quantity = request.data.get('quantity')
+    product = get_object_or_404(Product, id=product_id)
+    cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+    if cart_item and quantity:
+        cart_item.quantity = int(quantity)
+        cart_item.save()
+    serializer = CartSerializer(cart)
+    return Response(serializer.data)

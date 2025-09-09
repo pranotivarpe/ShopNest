@@ -1,36 +1,32 @@
-# Payment Integration Fix TODO
+# Cart Functionality Implementation Plan
 
-## Frontend Changes
+## Backend Tasks
 
-- [x] Create StripeCardElement component
-- [x] Update CreateCardComponent to use Stripe Elements
-- [x] Update cardActions to send payment_method_id
-- [x] Update ChargeCardComponent to use payment_method_id
-- [x] Wrap CreateCardComponent with Elements in CheckoutPage
+- [x] Add Cart and CartItem models in account/models.py
+- [x] Create and run migrations for new models
+- [x] Add serializers for cart models in account/serializers.py
+- [x] Add views for cart operations (add, remove, get cart) in account/views.py
+- [x] Add URLs for cart endpoints in account/urls.py
 
-## Backend Changes
+## Frontend Tasks
 
-- [x] Update CreateCardTokenView to accept payment_method_id
-- [x] Update ChargeCustomerView (already uses payment_method_id)
+- [x] Create cartActions.js for Redux actions
+- [x] Create cartReducers.js for Redux state management
+- [x] Update store.js to include cart reducer
+- [ ] Update ProductDetailsPage.js to add "Add to Cart" button
+- [ ] Create CartPage.js to display cart items
+- [ ] Update Navbar.js to include cart link
+- [ ] Update CheckoutPage.js to handle cart items instead of single product
 
 ## Testing
 
-- [ ] Test new card creation with Stripe Elements (Backend server running at http://127.0.0.1:8000/)
-- [ ] Test payment with new card
-- [ ] Test payment with saved card
-- [ ] Verify no raw card data is sent to backend
+- [ ] Test add to cart functionality
+- [ ] Test cart page display
+- [ ] Test checkout with multiple items
+- [ ] Test payment flow
 
-## Summary of Changes Made
+## CheckoutPage Improvements
 
-1. **StripeCardElement.js**: Created new component using Stripe Elements for secure card input
-2. **CheckoutPage.js**: Added Stripe promise initialization and wrapped CreateCardComponent with Elements
-3. **CreateCardComponent.js**: Updated payWithSavedCard to send payment_method_id instead of raw card data
-4. **ChargeCardComponent.js**: Updated to use payment_method_id from Stripe response
-5. **Backend**: Already configured to handle payment_method_id (no changes needed)
-
-## Security Improvements
-
-- Raw card data is no longer sent to the backend
-- All card processing now uses Stripe's secure payment methods
-- Card numbers are masked to last 4 digits in database
-- PCI compliance improved by using Stripe Elements
+- [x] Remove unused handlePlaceOrder function from CheckoutPage.js
+- [x] Add address selection validation in CheckoutPage.js
+- [x] Add ARIA labels for accessibility in CheckoutPage.js

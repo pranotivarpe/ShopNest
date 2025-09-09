@@ -25,4 +25,10 @@ urlpatterns = [
 
     # stripe
     path('stripe-cards/', views.CardsListView.as_view(), name="stripe-cards-list-page"),
+
+    # Cart URLs
+    path('cart/', views.get_cart, name='get-cart'),
+    path('cart/add/', views.add_to_cart, name='add-to-cart'),
+    path('cart/remove/', views.remove_from_cart, name='remove-from-cart'),
+    path('cart/update/', views.update_cart_item, name='update-cart-item'),
 ]
