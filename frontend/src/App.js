@@ -23,6 +23,7 @@ import ElectronicsPage from './pages/ElectronicsPage';
 import ClothingPage from './pages/ClothingPage';
 import DecorPage from './pages/DecorPage';
 import CartPage from './pages/CartPage'
+import CartCheckoutPage from './pages/CartCheckoutPage';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/custom.css';
 
@@ -40,7 +41,6 @@ const App = () => {
             <Route path="/new-product/" component={ProductCreatePage} exact />
             <Route path="/product/:id/" component={ProductDetailsPage} exact />
             <Route path="/product-update/:id/" component={ProductUpdatePage} exact />
-            <Route path="/product/:id/checkout/" component={CheckoutPage} exact />
             <Route path="/payment-status" component={PaymentStatus} exact />
             <Route path="/login" component={Login} exact />
             <Route path="/register" component={Register} exact />
@@ -58,6 +58,8 @@ const App = () => {
             <Route path="/decor" component={DecorPage} exact />
             <Route path="/cart" component={CartPage} exact />
             <Route path="/checkout" component={CheckoutPage} exact />
+            <Route path="/cartcheckout" component={CartCheckoutPage} exact />
+            <Route path="/checkout/product/:id" component={CheckoutPage} exact />
 
             <Route path="" component={NotFound} exact />
 

@@ -98,7 +98,7 @@ export const removeFromCart = (product_id) => async (dispatch, getState) => {
         const { data } = await axios.post("/account/cart/remove/", { product_id }, config)
 
         dispatch({ type: CART_REMOVE_SUCCESS, payload: data })
-        dispatch({ type: CART_SUCCESS, payload: data }) // ✅ sync with main reducer
+        // Remove this line: dispatch({ type: CART_SUCCESS, payload: data })
     } catch (error) {
         dispatch({
             type: CART_REMOVE_FAIL,

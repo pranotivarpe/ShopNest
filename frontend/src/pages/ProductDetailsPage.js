@@ -18,7 +18,6 @@ import {
     DELETE_PRODUCT_RESET,
     UPDATE_PRODUCT_RESET,
     CARD_CREATE_RESET,
-    CART_ADD_SUCCESS,
 } from "../constants";
 
 function ProductDetailsPage({ history, match }) {
@@ -45,9 +44,12 @@ function ProductDetailsPage({ history, match }) {
     );
     const { success: productDeletionSuccess } = deleteProductReducer;
 
-    // cart add reducer
-    const cartAddReducer = useSelector((state) => state.cartAddReducer);
-    const { success: cartAddSuccess, loading: cartAddLoading } = cartAddReducer;
+    // Use the consolidated cart reducer instead of cartAddReducer
+    const cartReducer = useSelector((state) => state.cartReducer);
+    const { loading: cartLoading } = cartReducer;
+
+    // Local state to show success message
+    const [showCartSuccess, setShowCartSuccess] = useState(false);
 
     useEffect(() => {
         dispatch(getProductDetails(match.params.id));
@@ -56,12 +58,13 @@ function ProductDetailsPage({ history, match }) {
         dispatch({ type: CARD_CREATE_RESET });
     }, [dispatch, match]);
 
+    // Handle cart success with local state instead of reducer reset
     useEffect(() => {
-        if (cartAddSuccess) {
+        if (showCartSuccess) {
             alert("✅ Product added to cart successfully!");
-            dispatch({ type: CART_ADD_SUCCESS });
+            setShowCartSuccess(false);
         }
-    }, [cartAddSuccess, dispatch]);
+    }, [showCartSuccess]);
 
     // confirm product deletion
     const confirmDelete = () => {
@@ -74,16 +77,25 @@ function ProductDetailsPage({ history, match }) {
         if (!userInfo) {
             history.push('/login');
         } else {
-            dispatch(addToCart(product.id));
+            dispatch(addToCart(product.id))
+                .then(() => {
+                    // Show success message after adding to cart
+                    setShowCartSuccess(true);
+                })
+                .catch((error) => {
+                    console.error("Error adding to cart:", error);
+                });
         }
     };
 
     // after deletion
-    if (productDeletionSuccess) {
-        alert("✅ Product successfully deleted.");
-        history.push("/");
-        dispatch({ type: DELETE_PRODUCT_RESET });
-    }
+    useEffect(() => {
+        if (productDeletionSuccess) {
+            alert("✅ Product successfully deleted.");
+            history.push("/");
+            dispatch({ type: DELETE_PRODUCT_RESET });
+        }
+    }, [productDeletionSuccess, history, dispatch]);
 
     return (
         <div>
@@ -186,16 +198,16 @@ function ProductDetailsPage({ history, match }) {
                                         variant="primary"
                                         className="w-100 py-2 mb-2"
                                         onClick={handleAddToCart}
-                                        disabled={cartAddLoading}
+                                        disabled={cartLoading}
                                     >
-                                        {cartAddLoading ? 'Adding...' : '🛒 Add to Cart'}
+                                        {cartLoading ? 'Adding...' : '🛒 Add to Cart'}
                                     </Button>
                                     <Link to="/cart">
                                         <Button variant="outline-primary" className="w-100 py-2 mb-2">
                                             View Cart
                                         </Button>
                                     </Link>
-                                    <Link to={`${product.id}/checkout/`}>
+                                    <Link to={`/checkout/product/${product.id}`}>
                                         <Button variant="success" className="w-100 py-2">
                                             💳 Buy Now
                                         </Button>

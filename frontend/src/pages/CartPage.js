@@ -1,10 +1,55 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useHistory } from 'react-router-dom';
-import { Container, Row, Col, Card, Button, Image, Spinner, OverlayTrigger, Tooltip, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Image, Spinner, Modal } from 'react-bootstrap';
 import Message from '../components/Message';
 import { getCart, removeFromCart, updateCartItem } from '../actions/cartActions';
-import { CART_REMOVE_RESET, CART_UPDATE_RESET } from '../constants';
+
+// Custom Tooltip Component to replace OverlayTrigger
+const CustomTooltip = ({ text, children, placement = 'top' }) => {
+    const [show, setShow] = useState(false);
+
+    return (
+        <div
+            onMouseEnter={() => setShow(true)}
+            onMouseLeave={() => setShow(false)}
+            style={{ position: 'relative', display: 'inline-block' }}
+        >
+            {children}
+            {show && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: placement === 'top' ? '100%' : 'auto',
+                    top: placement === 'bottom' ? '100%' : 'auto',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    padding: '5px 10px',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    whiteSpace: 'nowrap',
+                    zIndex: 1000,
+                    marginBottom: placement === 'top' ? '5px' : '0',
+                    marginTop: placement === 'bottom' ? '5px' : '0',
+                    pointerEvents: 'none'
+                }}>
+                    {text}
+                    <div style={{
+                        position: 'absolute',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        border: '5px solid transparent',
+                        [placement === 'top' ? 'top' : 'bottom']: '100%',
+                        borderColor: placement === 'top'
+                            ? 'rgba(0, 0, 0, 0.8) transparent transparent transparent'
+                            : 'transparent transparent rgba(0, 0, 0, 0.8) transparent'
+                    }}></div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 function CartPage() {
     const dispatch = useDispatch();
@@ -15,12 +60,6 @@ function CartPage() {
 
     const cartReducer = useSelector((state) => state.cartReducer);
     const { loading, error, cart } = cartReducer;
-
-    const cartRemoveReducer = useSelector((state) => state.cartRemoveReducer);
-    const { loading: removeLoading, error: removeError, success: removeSuccess } = cartRemoveReducer;
-
-    const cartUpdateReducer = useSelector((state) => state.cartUpdateReducer);
-    const { loading: updateLoading, error: updateError, success: updateSuccess } = cartUpdateReducer;
 
     // Local state for remove confirmation modal
     const [showRemoveModal, setShowRemoveModal] = useState(false);
@@ -38,18 +77,6 @@ function CartPage() {
             dispatch(getCart());
         }
     }, [dispatch, userInfo, history]);
-
-    useEffect(() => {
-        if (removeSuccess) {
-            dispatch({ type: CART_REMOVE_RESET });
-        }
-    }, [removeSuccess, dispatch]);
-
-    useEffect(() => {
-        if (updateSuccess) {
-            dispatch({ type: CART_UPDATE_RESET });
-        }
-    }, [updateSuccess, dispatch]);
 
     const handleRemoveFromCart = (productId) => {
         setRemoveProductId(productId);
@@ -87,16 +114,16 @@ function CartPage() {
         <Container className="py-4">
             <h2 className="mb-4">Shopping Cart</h2>
 
-            {(loading || removeLoading || updateLoading) && (
+            {loading && (
                 <div className="d-flex justify-content-center align-items-center my-5">
                     <Spinner animation="border" />
                     <h5 className="ml-3">Loading cart...</h5>
                 </div>
             )}
 
-            {(error || removeError || updateError) && (
+            {error && (
                 <Message variant="danger">
-                    {error || removeError || updateError}
+                    {error}
                 </Message>
             )}
 
@@ -133,9 +160,8 @@ function CartPage() {
                                                 </Col>
                                                 <Col xs={3}>
                                                     <div className="d-flex align-items-center">
-                                                        <OverlayTrigger
-                                                            placement="top"
-                                                            overlay={<Tooltip>{item.quantity <= 1 ? "Minimum quantity is 1" : "Decrease quantity"}</Tooltip>}
+                                                        <CustomTooltip
+                                                            text={item.quantity <= 1 ? "Minimum quantity is 1" : "Decrease quantity"}
                                                         >
                                                             <span>
                                                                 <Button
@@ -147,25 +173,24 @@ function CartPage() {
                                                                     -
                                                                 </Button>
                                                             </span>
-                                                        </OverlayTrigger>
+                                                        </CustomTooltip>
 
                                                         <span className="mx-2">{item.quantity}</span>
-                                                        <Button
-                                                            variant="outline-secondary"
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                handleQuantityChange(item.product.id, item.quantity + 1)
-                                                            }
-                                                        >
-                                                            +
-                                                        </Button>
+                                                        <CustomTooltip text="Increase quantity">
+                                                            <Button
+                                                                variant="outline-secondary"
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    handleQuantityChange(item.product.id, item.quantity + 1)
+                                                                }
+                                                            >
+                                                                +
+                                                            </Button>
+                                                        </CustomTooltip>
                                                     </div>
                                                 </Col>
                                                 <Col xs={2}>
-                                                    <OverlayTrigger
-                                                        placement="top"
-                                                        overlay={<Tooltip>Remove item from cart</Tooltip>}
-                                                    >
+                                                    <CustomTooltip text="Remove item from cart">
                                                         <Button
                                                             variant="danger"
                                                             size="sm"
@@ -173,7 +198,7 @@ function CartPage() {
                                                         >
                                                             Remove
                                                         </Button>
-                                                    </OverlayTrigger>
+                                                    </CustomTooltip>
                                                 </Col>
                                             </Row>
                                         </Card.Body>
@@ -193,7 +218,7 @@ function CartPage() {
                                             <span>Total Price:</span>
                                             <span>₹ {totalPrice.toFixed(2)}</span>
                                         </div>
-                                        <Link to="/checkout">
+                                        <Link to="/cartcheckout">
                                             <Button variant="success" className="w-100 mt-3">
                                                 Proceed to Checkout
                                             </Button>

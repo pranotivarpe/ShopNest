@@ -7,7 +7,7 @@ import { getSingleAddress } from '../actions/userActions'
 import Message from './Message'
 import '../styles/checkout.css' // 🔥 New styles
 
-const ChargeCardComponent = ({ product, match, selectedAddressId }) => {
+const ChargeCardComponent = ({ selectedAddressId, addressSelected, checkoutData }) => {
     const history = useHistory()
     const dispatch = useDispatch()
 
@@ -18,32 +18,71 @@ const ChargeCardComponent = ({ product, match, selectedAddressId }) => {
     const { address } = useSelector((state) => state.getSingleAddressReducer)
 
     useEffect(() => {
-        dispatch(getSingleAddress(selectedAddressId))
-    }, [dispatch, match, selectedAddressId])
+        if (selectedAddressId) {
+            dispatch(getSingleAddress(selectedAddressId))
+        }
+    }, [dispatch, selectedAddressId])
+
+    // Safe access to checkout data
+    const items = checkoutData?.items || [];
+    const totalAmount = checkoutData?.total || 0;
+    const productName = items.length > 0 && items[0].product
+        ? items[0].product.name
+        : 'Product';
+    const isCartCheckout = checkoutData?.type === 'cart';
 
     const onSubmit = (e) => {
         e.preventDefault()
+
+        if (!address) {
+            alert("Please select a delivery address");
+            return;
+        }
+
         const address_detail = `${address.house_no}, near ${address.landmark}, ${address.city}, 
         ${address.state}, ${address.pin_code}`
+
         const data = {
-            email: cardData.email,
-            payment_method_id: cardData.card_data.id,
-            amount: product.price,
+            email: cardData?.email || '',
+            payment_method_id: cardData?.card_data?.id || '',
+            amount: totalAmount,
             name: address.name,
-            card_number: cardData.card_data.card.last4,
+            card_number: cardData?.card_data?.card?.last4 || '****',
             address: address_detail,
-            ordered_item: product.name,
+            ordered_item: isCartCheckout ? `${items.length} item(s) in cart` : productName,
             paid_status: true,
-            total_price: product.price,
+            total_price: totalAmount,
             is_delivered: false,
             delivered_at: "Not Delivered",
+            // Add metadata for cart checkout
+            metadata: isCartCheckout ? {
+                items_count: items.length,
+                product_names: items.map(item => item.product?.name || 'Unknown').join(', ')
+            } : {}
         }
         dispatch(chargeCustomer(data))
     }
 
     if (chargeSuccessfull) {
-        history.push({ pathname: '/payment-status/', state: { detail: product } })
+        history.push({
+            pathname: '/payment-status/',
+            state: {
+                detail: isCartCheckout ? {
+                    name: `${items.length} item(s) in cart`,
+                    price: totalAmount
+                } : checkoutData?.items[0]?.product
+            }
+        })
         window.location.reload()
+    }
+
+    // Show error if checkout data is missing
+    if (!checkoutData) {
+        return (
+            <Message variant="danger">
+                Checkout data is missing. Please try again.
+            </Message>
+        );
     }
 
     return (
@@ -54,15 +93,35 @@ const ChargeCardComponent = ({ product, match, selectedAddressId }) => {
                 <Card.Body>
                     <h4 className="checkout-title">Confirm Your Payment</h4>
                     <p className="text-muted mb-3">
-                        Using Card: <strong>•••• •••• •••• {cardData.card_data.last4}</strong>
+                        Using Card: <strong>•••• •••• •••• {cardData?.card_data?.last4 || '****'}</strong>
                     </p>
+
+                    {/* Order Summary */}
+                    <Card className="mb-3">
+                        <Card.Body>
+                            <h6>Order Summary</h6>
+                            {items.map((item, index) => (
+                                <div key={index} className="d-flex justify-content-between mb-2">
+                                    <span>
+                                        {item.quantity} x {item.product?.name || 'Unknown Product'}
+                                    </span>
+                                    <span>₹ {(item.product?.price * item.quantity || 0).toFixed(2)}</span>
+                                </div>
+                            ))}
+                            <hr />
+                            <div className="d-flex justify-content-between">
+                                <strong>Total:</strong>
+                                <strong>₹ {totalAmount.toFixed(2)}</strong>
+                            </div>
+                        </Card.Body>
+                    </Card>
 
                     <Form onSubmit={onSubmit}>
                         <Button
                             variant="primary"
                             type="submit"
                             className="checkout-btn"
-                            disabled={chargingStatus}
+                            disabled={chargingStatus || !addressSelected}
                         >
                             {chargingStatus ? (
                                 <>
@@ -75,7 +134,7 @@ const ChargeCardComponent = ({ product, match, selectedAddressId }) => {
                                     /> Processing...
                                 </>
                             ) : (
-                                <>Pay ₹{product.price}</>
+                                <>Pay ₹{totalAmount.toFixed(2)}</>
                             )}
                         </Button>
                     </Form>

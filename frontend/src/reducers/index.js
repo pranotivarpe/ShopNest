@@ -16,12 +16,8 @@ import {
     updateStripeCardtReducer
 } from "./cardReducers";
 
-import {
-    cartReducer,
-    cartAddReducer,
-    cartRemoveReducer,
-    cartUpdateReducer
-} from "./cartReducers";
+
+import { cartReducer } from './cartReducers'
 
 import {
     userLoginReducer,
@@ -38,7 +34,7 @@ import {
     getAllOrdersReducer,
 } from "./userReducers";
 
-const allReducers = combineReducers({
+const reducer = combineReducers({
     productsListReducer,
     productDetailsReducer,
     createProductReducer,
@@ -63,10 +59,7 @@ const allReducers = combineReducers({
     userDetailsUpdateReducer,
     deleteUserAccountReducer,
     cartReducer,
-    cartAddReducer,
-    cartRemoveReducer,
-    cartUpdateReducer,
 })
 
 
-export default allReducers
+export default reducer

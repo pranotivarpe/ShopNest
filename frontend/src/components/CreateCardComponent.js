@@ -10,8 +10,7 @@ import DeleteCardComponent from './DeleteCardComponent';
 import { useStripe, useElements } from '@stripe/react-stripe-js';
 import StripeCardElement from './StripeCardElement';
 
-const CreateCardComponent = ({ stripeCards, addressSelected }) => {
-
+const CreateCardComponent = ({ stripeCards, addressSelected, checkoutData }) => {
     let history = useHistory()
     const dispatch = useDispatch()
     const stripe = useStripe()
@@ -35,6 +34,11 @@ const CreateCardComponent = ({ stripeCards, addressSelected }) => {
     // card delete reducer
     const deleteSavedCardReducer = useSelector(state => state.deleteSavedCardReducer)
     const { loading, success, error } = deleteSavedCardReducer
+
+    // Safe access to checkout data
+    const items = checkoutData?.items || [];
+    const totalAmount = checkoutData?.total || 0;
+    const isCartCheckout = checkoutData?.type === 'cart';
 
     useEffect(() => {
         if (!userInfo) {
@@ -72,7 +76,13 @@ const CreateCardComponent = ({ stripeCards, addressSelected }) => {
         const data = {
             "email": email === "" ? userInfo.email : email,
             "payment_method_id": paymentMethod.id,
-            "save_card": saveCard
+            "save_card": saveCard,
+            // Add checkout data for processing
+            "checkout_data": {
+                amount: totalAmount,
+                items_count: items.length,
+                is_cart_checkout: isCartCheckout
+            }
         }
         dispatch(createCard(data))
         setProcessing(false)
@@ -82,9 +92,15 @@ const CreateCardComponent = ({ stripeCards, addressSelected }) => {
     const payWithSavedCard = (cardData) => {
         if (addressSelected) {
             const data = {
-                "email": cardData.email,
-                "payment_method_id": cardData.card_id,
-                "save_card": false
+                "email": cardData.email || userInfo.email,
+                "payment_method_id": cardData.card_id || cardData.id,
+                "save_card": false,
+                // Add checkout data for processing
+                "checkout_data": {
+                    amount: totalAmount,
+                    items_count: items.length,
+                    is_cart_checkout: isCartCheckout
+                }
             }
             dispatch(createCard(data))
         } else {
@@ -120,11 +136,31 @@ const CreateCardComponent = ({ stripeCards, addressSelected }) => {
     if (success) {
         alert("Card successfully deleted.")
         window.location.reload()
-
     }
 
     return (
         <div>
+            {/* Order Summary */}
+            {checkoutData && (
+                <Card className="mb-4">
+                    <Card.Body>
+                        <h5>Order Summary</h5>
+                        {items.map((item, index) => (
+                            <div key={index} className="d-flex justify-content-between mb-2">
+                                <span>
+                                    {item.quantity} x {item.product?.name || 'Unknown Product'}
+                                </span>
+                                <span>₹ {(item.product?.price * item.quantity || 0).toFixed(2)}</span>
+                            </div>
+                        ))}
+                        <hr />
+                        <div className="d-flex justify-content-between">
+                            <strong>Total:</strong>
+                            <strong>₹ {totalAmount.toFixed(2)}</strong>
+                        </div>
+                    </Card.Body>
+                </Card>
+            )}
 
             {/* Working on Modal Start*/}
             <div>
@@ -176,7 +212,7 @@ const CreateCardComponent = ({ stripeCards, addressSelected }) => {
                                     placeholder="Email address linked with the Card" />
                             </Form.Group>
                             :
-                            <span><b>Default Customer Email: </b>{userInfo.email}</span>
+                            <span><b>Default Customer Email: </b>{userInfo?.email || ''}</span>
                         }
                         <p>
                             <Link to="#" onClick={() => {
@@ -208,7 +244,7 @@ const CreateCardComponent = ({ stripeCards, addressSelected }) => {
                         </Form.Text>
 
                         <Button className="btn-sm button-focus-css" variant="primary" type="submit" disabled={!stripe || processing}>
-                            {processing ? 'Processing...' : 'Submit'}
+                            {processing ? 'Processing...' : `Pay ₹${totalAmount.toFixed(2)}`}
                         </Button>
                     </Form>
                     : ""}
@@ -217,13 +253,13 @@ const CreateCardComponent = ({ stripeCards, addressSelected }) => {
 
             <div className="my-4 card px-4 py-4">
                 <h5>Saved card</h5>
-                {stripeCards.length > 0 ?
+                {stripeCards && stripeCards.length > 0 ?
                     stripeCards.map(cardData => (
                         <div key={cardData.id}>
                             <Card
                                 style={{ border: "1px solid", borderColor: "#C6ACE7" }}
                                 className="p-2">
-                                <p><b>Card Number:</b> XXXX XXXX XXXX {cardData.card_number.slice(12, 18)}</p>
+                                <p><b>Card Number:</b> XXXX XXXX XXXX {cardData.card_number?.slice(12, 18) || cardData.last4}</p>
                                 <div>
                                     {showCardDetails(cardData)}
                                     <button onClick={() => {
@@ -235,7 +271,7 @@ const CreateCardComponent = ({ stripeCards, addressSelected }) => {
                                     </button>
                                     <button onClick={() => payWithSavedCard(cardData)}
                                         className="ml-2 btn btn-sm btn-outline-primary button-focus-css">
-                                        Pay with this Card
+                                        Pay ₹{totalAmount.toFixed(2)}
                                     </button>
                                 </div>
                             </Card>

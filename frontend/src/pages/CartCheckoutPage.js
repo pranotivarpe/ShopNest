@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { Link, useHistory } from 'react-router-dom'
 import { Row, Col, Container, Image, Card, Spinner } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
-import { getProductDetails } from '../actions/productActions'
 import CreateCardComponent from '../components/CreateCardComponent'
 import ChargeCardComponent from '../components/ChargeCardComponent'
 import Message from '../components/Message'
@@ -12,17 +11,17 @@ import { checkTokenValidation, logout } from '../actions/userActions'
 import { CHARGE_CARD_RESET } from '../constants/index'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
+import { getCart } from '../actions/cartActions'
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY)
 
-const CheckoutPage = ({ match }) => {
+const CartCheckoutPage = () => {
     const history = useHistory()
     const dispatch = useDispatch()
 
     const [addressSelected, setAddressSelected] = useState(false)
     const [selectedAddressId, setSelectedAddressId] = useState(0)
-    const [checkoutData, setCheckoutData] = useState(null)
 
     const handleAddressId = (id) => {
         if (id) setAddressSelected(true)
@@ -33,8 +32,8 @@ const CheckoutPage = ({ match }) => {
     const checkTokenValidationReducer = useSelector(state => state.checkTokenValidationReducer)
     const { error: tokenError } = checkTokenValidationReducer
 
-    const productDetailsReducer = useSelector(state => state.productDetailsReducer)
-    const { loading, error, product } = productDetailsReducer
+    const cartReducer = useSelector(state => state.cartReducer)
+    const { loading, error, cart } = cartReducer
 
     const createCardReducer = useSelector(state => state.createCardReducer)
     const { error: cardCreationError, success, loading: cardCreationLoading } = createCardReducer
@@ -50,39 +49,11 @@ const CheckoutPage = ({ match }) => {
             history.push("/login")
         } else {
             dispatch(checkTokenValidation())
-
-            const productId = match?.params?.id
-            if (!productId) {
-                alert("No product selected. Redirecting to products page.")
-                history.push("/products")
-                return
-            }
-
-            console.log("Fetching product details for ID:", productId)
-            dispatch(getProductDetails(productId))
+            dispatch(getCart()) // Load cart data
             dispatch(savedCardsList())
             dispatch({ type: CHARGE_CARD_RESET })
         }
-    }, [dispatch, match, history, success, userInfo])
-
-    // Set checkout data when product is loaded
-    useEffect(() => {
-        if (product) {
-            // Ensure price is a number
-            const price = typeof product.price === 'string'
-                ? parseFloat(product.price)
-                : Number(product.price);
-
-            setCheckoutData({
-                type: 'product',
-                items: [{
-                    product: product,
-                    quantity: 1
-                }],
-                total: price || 0 // Ensure it's always a number
-            })
-        }
-    }, [product])
+    }, [dispatch, history, success, userInfo])
 
     // Token expiration handling
     useEffect(() => {
@@ -93,6 +64,9 @@ const CheckoutPage = ({ match }) => {
             window.location.reload()
         }
     }, [userInfo, tokenError, dispatch, history])
+
+    const items = cart?.items || []
+    const totalPrice = items.reduce((acc, item) => acc + (parseFloat(item.product.price) * item.quantity), 0)
 
     return (
         <Container className="py-4">
@@ -114,13 +88,13 @@ const CheckoutPage = ({ match }) => {
 
             {error && <Message variant='danger'>{error}</Message>}
 
-            {checkoutData && (
+            {cart && (
                 <Row>
                     {/* Checkout Summary */}
                     <Col md={6} className="mb-4">
-                        <h3 className="mb-3">Checkout Summary</h3>
+                        <h3 className="mb-3">Cart Checkout Summary</h3>
 
-                        {checkoutData.items.map((item, index) => (
+                        {items.map((item, index) => (
                             <Card key={index} className="shadow-sm mb-3">
                                 <Card.Body>
                                     <Row className="align-items-center">
@@ -132,24 +106,25 @@ const CheckoutPage = ({ match }) => {
                                                     fluid
                                                     rounded
                                                     className="border"
+                                                    style={{ height: "100px", objectFit: "cover" }}
                                                 />
                                             ) : (
-                                                <div className="border bg-light d-flex justify-content-center align-items-center" style={{ height: "150px" }}>
+                                                <div className="border bg-light d-flex justify-content-center align-items-center" style={{ height: "100px", width: "100px" }}>
                                                     <span>No Image</span>
                                                 </div>
                                             )}
                                         </Col>
                                         <Col xs={7}>
-                                            <h5 className="text-capitalize">{item.product?.name || "Unnamed Product"}</h5>
+                                            <h6 className="text-capitalize">{item.product?.name || "Unnamed Product"}</h6>
                                             <p>Quantity: {item.quantity}</p>
-                                            <span className="text-success h6">₹ {item.product?.price || 0}</span>
+                                            <span className="text-success">₹ {item.product?.price || 0}</span>
                                         </Col>
                                     </Row>
                                 </Card.Body>
                             </Card>
                         ))}
 
-                        <Card className="shadow-sm">
+                        <Card className="shadow-sm mt-3">
                             <Card.Body>
                                 <div className="d-flex justify-content-between align-items-center mb-2">
                                     <h4>Billing Address</h4>
@@ -168,26 +143,53 @@ const CheckoutPage = ({ match }) => {
                                 Please select a billing address to proceed with payment.
                             </Message>
                         )}
-                        <Card className="shadow-sm" aria-disabled={!addressSelected}>
+
+                        <Card className="shadow-sm mb-3">
                             <Card.Body>
+                                <h5>Order Summary</h5>
+                                <hr />
+                                <div className="d-flex justify-content-between mb-2">
+                                    <span>Items ({items.length}):</span>
+                                    <span>₹ {totalPrice.toFixed(2)}</span>
+                                </div>
+                                <div className="d-flex justify-content-between mb-2">
+                                    <span>Shipping:</span>
+                                    <span>₹ 0.00</span>
+                                </div>
+                                <div className="d-flex justify-content-between mb-2">
+                                    <span>Tax:</span>
+                                    <span>₹ 0.00</span>
+                                </div>
+                                <hr />
                                 <div className="d-flex justify-content-between mb-3">
                                     <strong>Total:</strong>
-                                    {/* FIX: Ensure total is a number before calling toFixed() */}
-                                    <strong>₹ {typeof checkoutData.total === 'number' ? checkoutData.total.toFixed(2) : '0.00'}</strong>
+                                    <strong>₹ {totalPrice.toFixed(2)}</strong>
                                 </div>
+                            </Card.Body>
+                        </Card>
 
+                        <Card className="shadow-sm" aria-disabled={!addressSelected}>
+                            <Card.Body>
                                 {success ? (
                                     <ChargeCardComponent
                                         selectedAddressId={selectedAddressId}
                                         addressSelected={addressSelected}
-                                        checkoutData={checkoutData}
+                                        checkoutData={{
+                                            type: 'cart',
+                                            items: items,
+                                            total: totalPrice
+                                        }}
                                     />
                                 ) : (
                                     <Elements stripe={stripePromise}>
                                         <CreateCardComponent
                                             addressSelected={addressSelected}
                                             stripeCards={stripeCards || []}
-                                            checkoutData={checkoutData}
+                                            checkoutData={{
+                                                type: 'cart',
+                                                items: items,
+                                                total: totalPrice
+                                            }}
                                         />
                                     </Elements>
                                 )}
@@ -200,4 +202,4 @@ const CheckoutPage = ({ match }) => {
     )
 }
 
-export default CheckoutPage
+export default CartCheckoutPage
